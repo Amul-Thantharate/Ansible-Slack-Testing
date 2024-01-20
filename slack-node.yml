@@ -1,0 +1,75 @@
+---
+- name: Play Name
+  hosts: all
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_user: node12
+    ansible_group: node12
+    destdir: /home/sampleapp
+    gittoken: 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
+  pre_tasks:
+    - name: Installing dependencies for node
+      become: true
+      ansible.builtin.apt:
+        name:
+          - nodejs
+          - npm
+          - git
+        state: present
+        update_cache: true
+  tasks:
+    - name: Version of node and npm installed
+      ansible.builtin.shell:
+        cmd: "node --version && npm --version"
+      register: versioninfo
+      changed_when: false
+    - name: Create Dest Directory if not exists
+      become: true
+      ansible.builtin.file:
+        path: "{{ destdir }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_group }}"
+        mode: "0755"
+      check_mode: on
+    - name: Download the nodejs code from github
+      check_mode: no
+      become: true
+      ansible.builtin.git:
+        repo: "https://{{ gittoken }}@github.com/Amul-Thantharate/Ansible-Slack-Testing.git"
+        dest: "{{ destdir }}"
+      register: gitout
+      changed_when: gitout.changed
+    - name: Change Ownership of the directory to node12
+      become: true
+      ansible.builtin.file:
+        path: "{{ destdir }}"
+        owner: "{{ ansible_user }}"
+      register: chgrpout
+    - name: Installing dependencies with npm command
+      become: true
+      ansible.builtin.command:
+        cmd: "npm install"
+        chdir: "{{ destdir }}"
+      register: npminstlout
+      changed_when: npminstlout.stdout_lines is changed
+    - name: Debug npm install command
+      ansible.builtin.debug:
+        msg: "{{ npminstlout.stdout_lines }}"
+    - name: Start the nodejs application
+      async: 10
+      poll: 0
+      ansible.builtin.command:
+        cmd: "(node server.js > nodeserv.log 2>&1 &)"
+        chdir: "{{ destdir }}"
+      register: appstart
+      changed_when: false
+    - name: Validating the port is open or not
+      tags: nodevalidate
+      ansible.builtin.wait_for:
+        host: "localhost"
+        port: 8080
+        delay: 10
+        timeout: 30
+        state: started
+        msg: "Nodejs server is running"
