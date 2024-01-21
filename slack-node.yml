@@ -31,7 +31,6 @@
         owner: "{{ ansible_user }}"
         group: "{{ ansible_group }}"
         mode: "0755"
-      check_mode: on
     - name: Download the nodejs code from github
       check_mode: no
       become: true
