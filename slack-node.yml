@@ -67,7 +67,7 @@
       tags: nodevalidate
       ansible.builtin.wait_for:
         host: "localhost"
-        port: 8080
+        port: 3000
         delay: 10
         timeout: 30
         state: started
