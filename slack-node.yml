@@ -31,8 +31,7 @@
         owner: "{{ ansible_user }}"
         group: "{{ ansible_group }}"
         mode: "0755"
-    - name: Download the nodejs code from github
-      check_mode: no
+    - name:  Download the nodejs code from github
       become: true
       ansible.builtin.git:
         repo: "https://{{ gittoken }}@github.com/Amul-Thantharate/Ansible-Slack-Testing.git"
@@ -67,7 +66,7 @@
       tags: nodevalidate
       ansible.builtin.wait_for:
         host: "localhost"
-        port: 3000
+        port: 8080
         delay: 10
         timeout: 30
         state: started
